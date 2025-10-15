@@ -1,0 +1,376 @@
+// 1.server.js
+const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const path = require("path");
+const cors = require("cors");
+
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public")));
+ 
+mongoose.connect("mongodb+srv://admin:admin08@cluster8.p2ww7tt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster8", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "connection error:"));
+db.once("open", () => console.log("MongoDB connected"));
+ 
+const CartSchema = new mongoose.Schema({
+  name: String,
+  gmail: String,
+  item: String,
+  quantity: String,
+  price: String
+});
+const Cart = mongoose.model("Cart", CartSchema);
+ 
+app.post("/api/cart", async (req, res) => {
+  const newItem = new Cart(req.body);
+  await newItem.save();
+  res.json({ message: "Item added successfully!" });
+});
+ 
+app.get("/api/cart", async (req, res) => {
+  const items = await Cart.find();
+  res.json(items);
+});
+ 
+app.put("/api/cart/:id", async (req, res) => {
+  await Cart.findByIdAndUpdate(req.params.id, req.body);
+  res.json({ message: "Item updated successfully!" });
+});
+ 
+app.delete("/api/cart/:id", async (req, res) => {
+  await Cart.findByIdAndDelete(req.params.id);
+  res.json({ message: "Item deleted successfully!" });
+});
+ 
+const PORT = 3000;
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+
+
+
+//2.public/index.html
+<!DOCTYPE html>
+<html lang="en" ng-app="shoppingApp">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Shopping Cart</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+  <script src="app.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 40px;
+    }
+    h1 {
+       
+      text-align: center;
+    }
+    form, table {
+      margin: 20px auto;
+      width: 80%;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    input {
+      margin: 5px;
+      padding: 8px;
+    }
+    button {
+      padding: 8px 12px;
+      color: black;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { }
+    table { border-collapse: collapse; }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+     
+  </style>
+</head>
+<body ng-controller="CartController">
+
+  <h1>Simple Shopping Cart</h1>
+
+  <!-- Form -->
+  <form ng-submit="addOrUpdateItem()">
+    <input type="text" ng-model="user.name" placeholder="Your Name" required>
+    <input type="email" ng-model="user.gmail" placeholder="Your Gmail" required><br>
+    <input type="text" ng-model="item.item" placeholder="Item Name" required>
+    <input type="text" ng-model="item.quantity" placeholder="Quantity" required>
+    <input type="text" ng-model="item.price" placeholder="Price" required>
+    <button type="submit">{{ editMode ? 'Update Item' : 'Add Item' }}</button>
+  </form>
+
+  <!-- Table -->
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Gmail</th>
+      <th>Item</th>
+      <th>Qty</th>
+      <th>Price</th>
+      <th>Actions</th>
+    </tr>
+    <tr ng-repeat="c in cart">
+      <td>{{ c.name }}</td>
+      <td>{{ c.gmail }}</td>
+      <td>{{ c.item }}</td>
+      <td>{{ c.quantity }}</td>
+      <td>{{ c.price }}</td>
+      <td>
+        <button ng-click="editItem(c)">Edit</button>
+        <button ng-click="deleteItem(c._id)" >Delete</button>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+
+
+
+// 3.public/app.js
+var app = angular.module("shoppingApp", []);
+
+app.controller("CartController", function($scope, $http) {
+  $scope.cart = [];
+  $scope.user = {};
+  $scope.item = {};
+  $scope.editMode = false;
+  let editId = null;
+
+  // Fetch all items
+  const loadItems = () => {
+    $http.get("/api/cart").then(res => $scope.cart = res.data);
+  };
+
+  // Add or update
+  $scope.addOrUpdateItem = () => {
+    const data = {
+      name: $scope.user.name,
+      gmail: $scope.user.gmail,
+      item: $scope.item.item,
+      quantity: $scope.item.quantity,
+      price: $scope.item.price
+    };
+
+    if ($scope.editMode) {
+      $http.put("/api/cart/" + editId, data).then(() => {
+        $scope.editMode = false;
+        $scope.item = {};
+        loadItems();
+      });
+    } else {
+      $http.post("/api/cart", data).then(() => {
+        $scope.item = {};
+        loadItems();
+      });
+    }
+  };
+
+  // Edit
+  $scope.editItem = (c) => {
+    $scope.user.name = c.name;
+    $scope.user.gmail = c.gmail;
+    $scope.item.item = c.item;
+    $scope.item.quantity = c.quantity;
+    $scope.item.price = c.price;
+    $scope.editMode = true;
+    editId = c._id;
+  };
+
+  // Delete
+  $scope.deleteItem = (id) => {
+    $http.delete("/api/cart/" + id).then(() => loadItems());
+  };
+
+  loadItems();
+});
+
+
+//4.selenium
+test_cart.py
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import time
+
+driver = webdriver.Chrome()  # Ensure chromedriver is in PATH
+driver.get("http://localhost:3000")
+driver.maximize_window()
+
+time.sleep(2)
+
+ 
+driver.find_element(By.XPATH, "//input[@placeholder='Your Name']").send_keys("Ridhya")
+driver.find_element(By.XPATH, "//input[@placeholder='Your Gmail']").send_keys("ridhya@gmail.com")
+
+ 
+driver.find_element(By.XPATH, "//input[@placeholder='Item Name']").send_keys("Laptop")
+driver.find_element(By.XPATH, "//input[@placeholder='Quantity']").send_keys("1")
+driver.find_element(By.XPATH, "//input[@placeholder='Price']").send_keys("70000")
+driver.find_element(By.XPATH, "//button[contains(text(),'Add Item')]").click()
+
+ 
+
+time.sleep(2)
+
+ 
+rows = driver.find_elements(By.XPATH, "//table/tbody/tr")
+print(f"Total items in cart: {len(rows)}")
+
+ 
+edit_button = driver.find_element(By.XPATH, "(//button[contains(text(),'Edit')])[1]")
+edit_button.click()
+time.sleep(1)
+
+ 
+price_input = driver.find_element(By.XPATH, "//input[@placeholder='Price']")
+price_input.clear()
+price_input.send_keys("65000")
+driver.find_element(By.XPATH, "//button[contains(text(),'Update Item')]").click()
+print("Item updated successfully")
+
+time.sleep(2)
+
+ 
+delete_button = driver.find_element(By.XPATH, "(//button[contains(text(),'Delete')])[1]")
+delete_button.click()
+print("Item deleted successfully")
+
+time.sleep(2)
+
+driver.quit()
+
+//pip install selenium
+//two cmd prompts--i)node server.js ii)python test_cart.py
+
+//5.xml inline
+ 
+library.xml: 
+<!DOCTYPE Library [ 
+  <!ELEMENT Library (Book+)> 
+  <!ELEMENT Book (BookID, Title, Author, Price, Genre)> 
+  <!ELEMENT BookID (#PCDATA)> 
+  <!ELEMENT Title (#PCDATA)> 
+  <!ELEMENT Author (#PCDATA)> 
+  <!ELEMENT Price (#PCDATA)> 
+  <!ELEMENT Genre (#PCDATA)> 
+]> 
+<Library> 
+  <Book> 
+    <BookID>B01</BookID> 
+    <Title>Clean Code</Title> 
+    <Author>Robert C. Martin</Author> 
+    <Price>450</Price> 
+    <Genre>Programming</Genre> 
+  </Book> 
+  <Book> 
+    <BookID>B02</BookID> 
+    <Title>Atomic Habits</Title> 
+    <Author>James Clear</Author> 
+    <Price>300</Price> 
+    <Genre>Self Help</Genre>   
+  </Book> 
+</Library>
+
+//6.xml outline
+menu.dtd
+<!ELEMENT Menu (Item+)> 
+<!ELEMENT Item (ItemID, Name, Category, Price)> 
+<!ELEMENT ItemID (#PCDATA)> 
+<!ELEMENT Name (#PCDATA)> 
+<!ELEMENT Category (#PCDATA)> 
+<!ELEMENT Price (#PCDATA)> 
+ menu.xml 
+<!DOCTYPE Menu SYSTEM "menu.dtd"> 
+<Menu> 
+  <Item> 
+    <ItemID>I101</ItemID> 
+    <Name>Chicken Biryani</Name> 
+    <Category>Main Course</Category> 
+    <Price>180</Price> 
+  </Item> 
+  <Item> 
+    <ItemID>I102</ItemID> 
+    <Name>Paneer Tikka</Name> 
+    <Category>Starter</Category> 
+    <Price>150</Price> 
+  </Item> 
+</Menu>
+
+
+//7.xslt
+students.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="students.xsl"?>
+<students>
+    <student>
+        <name>Ridhya</name>
+        <department>CSE</department>
+        <marks>90</marks>
+    </student>
+    <student>
+        <name>Arun</name>
+        <department>ECE</department>
+        <marks>85</marks>
+    </student>
+</students>
+
+
+students.xsl
+
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0"
+      xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:template match="/">
+    <html>
+      <head>
+        <title>Student Details</title>
+        <style>
+          table { border-collapse: collapse; width: 50%; }
+          th, td { border: 1px solid #555; padding: 8px; text-align: left; }
+          th { background-color: #ddd; }
+        </style>
+      </head>
+      <body>
+        <h2>Student Information</h2>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Marks</th>
+          </tr>
+          <xsl:for-each select="students/student">
+            <tr>
+              <td><xsl:value-of select="name"/></td>
+              <td><xsl:value-of select="department"/></td>
+              <td><xsl:value-of select="marks"/></td>
+            </tr>
+          </xsl:for-each>
+        </table>
+      </body>
+    </html>
+  </xsl:template>
+</xsl:stylesheet>
+
+//python -m http.server 8000
+//open the link in edge http://localhost:8000/students.xml
+
+
