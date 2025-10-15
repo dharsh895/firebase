@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="shoppingApp">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Shopping Cart</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+  <script src="app.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 40px;
+    }
+    h1 {
+       
+      text-align: center;
+    }
+    form, table {
+      margin: 20px auto;
+      width: 80%;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    input {
+      margin: 5px;
+      padding: 8px;
+    }
+    button {
+      padding: 8px 12px;
+      color: black;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { }
+    table { border-collapse: collapse; }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+     
+  </style>
+</head>
+<body ng-controller="CartController">
+
+  <h1>Simple Shopping Cart</h1>
+
+  <!-- Form -->
+  <form ng-submit="addOrUpdateItem()">
+    <input type="text" ng-model="user.name" placeholder="Your Name" required>
+    <input type="email" ng-model="user.gmail" placeholder="Your Gmail" required><br>
+    <input type="text" ng-model="item.item" placeholder="Item Name" required>
+    <input type="text" ng-model="item.quantity" placeholder="Quantity" required>
+    <input type="text" ng-model="item.price" placeholder="Price" required>
+    <button type="submit">{{ editMode ? 'Update Item' : 'Add Item' }}</button>
+  </form>
+
+  <!-- Table -->
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Gmail</th>
+      <th>Item</th>
+      <th>Qty</th>
+      <th>Price</th>
+      <th>Actions</th>
+    </tr>
+    <tr ng-repeat="c in cart">
+      <td>{{ c.name }}</td>
+      <td>{{ c.gmail }}</td>
+      <td>{{ c.item }}</td>
+      <td>{{ c.quantity }}</td>
+      <td>{{ c.price }}</td>
+      <td>
+        <button ng-click="editItem(c)">Edit</button>
+        <button ng-click="deleteItem(c._id)" >Delete</button>
+      </td>
+    </tr>
+  </table>
+<!-- Add this just above </body> or wherever you want it to appear -->
+<audio controls>
+  <source src="audio/sample.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+
+</body>
+</html>
