@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase Web App</title>
+</head>
+<body>
+  <h1>Firebase Web App</h1>
+
+  <button onclick="callHello()">Call /hello</button>
+  <pre id="helloResponse"></pre>
+
+  <hr>
+
+  <h3>Send JSON to /echo</h3>
+  <textarea id="jsonInput" rows="5" cols="50">
+{
+  "name": "Ridhya",
+  "age": 20
+}
+  </textarea><br>
+  <button onclick="callEcho()">Call /echo</button>
+  <pre id="echoResponse"></pre>
+
+  <script>
+    const API_BASE = "https://<your-region>-<your-project-id>.cloudfunctions.net/api";
+
+    async function callHello() {
+      const res = await fetch(`${API_BASE}/hello`);
+      const data = await res.json();
+      document.getElementById("helloResponse").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function callEcho() {
+      const input = document.getElementById("jsonInput").value;
+      let json;
+
+      try {
+        json = JSON.parse(input);
+      } catch (e) {
+        alert("Invalid JSON!");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/echo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(json),
+      });
+
+      const data = await res.json();
+      document.getElementById("echoResponse").textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
